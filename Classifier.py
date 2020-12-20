@@ -97,7 +97,8 @@ for i in range(1, class_count * examples_per_class + 1):
     plt.imshow(images_to_display[i - 1])
 
 
-# plt.show()
+plt.show()
+plt.close(figure)
 
 # Resize images
 
@@ -584,16 +585,24 @@ train_model()
 
 # Results
 
-plt_2 = matplotlib.pyplot
-figure_2 = plt_2.figure(figsize=(10, 4))
-figure_2.add_subplot(2, 1, 1)
-plt_2.plot(train_loss, label="Train loss")
-plt_2.plot(test_loss, label="Test loss")
-figure_2.add_subplot(2, 2, 2)
-plt_2.plot(train_accuracy, label="Train accuracy")
-plt_2.plot(test_accuracy, label="Test accuracy")
-figure_2.tight_layout()
-plt_2.show()
+x = [int(n) for n in range(epochs)]
+
+fig, (ax1, ax2) = plt.subplots(2)
+fig.suptitle("Training results")
+ax1.set_xticks(x)
+ax1.plot(x, train_loss, label="Train loss")
+ax1.plot(x, test_loss, label="Test loss")
+ax1.legend()
+plt.xlabel("Loss in epoch")
+ax2.set_xticks(x)
+ax2.plot(x, train_accuracy, label="Train accuracy")
+ax2.plot(x, test_accuracy, label="Test accuracy")
+plt.xlabel("Accuracy in epoch")
+plt.axis("on")
+plt.legend()
+plt.show()
+
+plt.close(fig)
 
 # Metrics
 
@@ -626,3 +635,51 @@ def print_confusion_matrix(matrix):
 
 print_confusion_matrix(matrix_test_set)
 print(classification_report_test_set)
+
+# Display example false predictions
+
+false_pos = []
+false_neg = []
+false_pos_labels = []
+false_neg_labels = []
+predicted_labels = []
+
+for index, cl_predicted in enumerate(test_set_indices):
+    cl_true = test_labels[index]
+    if cl_true != cl_predicted:
+        false_pos.append(test_images[index])
+        false_neg.append(test_images[index])
+        false_pos_labels.append(cl_true)
+        false_neg_labels.append(cl_true)
+        predicted_labels.append(cl_predicted)
+
+
+def display_false_predictions(images_set, labels_set, predicted_labels, name):
+    if len(images_set) != 0 and images_set is not None:
+        figure_3 = plt.figure(figsize=figure_size)
+        figure_3.suptitle(name)
+        fp_examples = 10
+
+        indefix = np.random.randint(0, len(images_set), size=fp_examples)
+        for im in range(1, 10 + 1):
+            if im < len(images_set):
+                figure_3.add_subplot(2, 5, im)
+                plt.axis("off")
+                font = {"size": 8}
+                plt.title("Correct: " + class_names[labels_set[indefix[im - 1]]] +
+                          "\nPredicted: " + class_names[predicted_labels[indefix[im - 1]]], fontdict=font)
+                image = np.array(images_set[indefix[im - 1]])
+                image = np.multiply(image, np.reshape(channel_std_deviation, newshape=(channels, 1, 1)))
+                ch_mean = np.reshape(channel_mean, newshape=(channels, 1, 1))
+                image = np.add(image, ch_mean)
+                image = np.clip(image, a_min=0, a_max=255)
+                image = np.rollaxis(image, axis=0, start=3)
+                plt.imshow(np.array(image, dtype=np.uint8))
+
+        plt.show()
+        plt.close(figure_3)
+
+
+display_false_predictions(images_set=false_pos, labels_set=false_pos_labels,
+                          predicted_labels=predicted_labels, name="False positives")
+
